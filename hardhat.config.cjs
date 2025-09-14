@@ -1,7 +1,7 @@
 const { HardhatUserConfig } = require('hardhat/config');
 require('@nomicfoundation/hardhat-toolbox');
 require('solidity-coverage');
-require('dotenv/config');
+require('dotenv').config({ path: '.env.local' });
 
 const config = {
   solidity: {

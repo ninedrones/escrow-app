@@ -10,11 +10,15 @@ import { PriceDisplay } from '@/components/PriceDisplay';
 import { OTCCodeGenerator } from '@/components/OTCCodeGenerator';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { usePriceCalculation } from '@/hooks/usePriceCalculation';
+import { useEscrow } from '@/hooks/useEscrow';
+import { useERC20 } from '@/hooks/useERC20';
 
 export default function NewEscrowPage() {
   const { isConnected, address } = useAccount();
   const router = useRouter();
   const { calculateAssetAmount } = usePriceCalculation();
+  const { createEscrow, isPending, isConfirming, isConfirmed, hash } = useEscrow();
+  const { approve, isPending: isApproving } = useERC20();
 
   // フォーム状態
   const [jpyAmount, setJpyAmount] = useState(10000);
@@ -59,22 +63,42 @@ export default function NewEscrowPage() {
       return;
     }
 
+    if (!address) {
+      toast.error('ウォレットが接続されていません');
+      return;
+    }
+
     setIsCreating(true);
     try {
-      // TODO: 実際のコントラクト呼び出しを実装
-      // const txHash = await createEscrowContract({
-      //   taker: address,
-      //   asset: assetSymbol,
-      //   jpyAmount,
-      //   assetAmount: calculation.assetAmount,
-      //   otcCode,
-      // });
-
-      // デモ用のダミー処理
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // デフォルトのTakerアドレス（デモ用）
+      const takerAddress = '0x0000000000000000000000000000000000000000';
       
-      toast.success('Escrowが正常に作成されました！');
-      router.push(`/session/1`); // デモ用のID
+      // デフォルトの期限（30分）
+      const deadlineDuration = 30 * 60; // 30分
+
+      // アセット量を適切な単位に変換
+      const assetAmountValue = parseFloat(assetAmount);
+
+      // ERC20トークンの場合は事前に承認が必要
+      if (assetSymbol !== 'ETH') {
+        const tokenAddress = assetSymbol === 'USDC' 
+          ? process.env.NEXT_PUBLIC_USDC_ADDRESS 
+          : process.env.NEXT_PUBLIC_USDT_ADDRESS;
+        
+        if (tokenAddress) {
+          await approve(tokenAddress, process.env.NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS!, assetAmountValue, 6);
+        }
+      }
+
+      // Escrow作成
+      await createEscrow(
+        takerAddress,
+        assetSymbol,
+        jpyAmount,
+        assetAmountValue,
+        deadlineDuration,
+        otcCode
+      );
       
     } catch (error) {
       console.error('Escrow creation failed:', error);
@@ -84,6 +108,15 @@ export default function NewEscrowPage() {
       setIsModalOpen(false);
     }
   };
+
+  // トランザクション完了時の処理
+  useEffect(() => {
+    if (isConfirmed && hash) {
+      toast.success('Escrowが正常に作成されました！');
+      // トランザクションハッシュからEscrow IDを取得（実際の実装ではイベントから取得）
+      router.push('/session/1'); // デモ用のID
+    }
+  }, [isConfirmed, hash, router]);
 
   if (!isConnected) {
     return (

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import { toast } from 'react-hot-toast';
+import { formatEther } from 'viem';
+import { useEscrow, useEscrowRead } from '@/hooks/useEscrow';
 import { EscrowStatusDisplay } from '@/components/EscrowStatusDisplay';
 import { CountdownTimer } from '@/components/CountdownTimer';
 import { QRCodeDisplay } from '@/components/QRCodeDisplay';
@@ -27,29 +29,44 @@ const DEMO_ESCROW_DATA = {
 export default function SessionPage() {
   const params = useParams();
   const router = useRouter();
+  const escrowId = params.id as string;
+  
   const { address, isConnected } = useAccount();
+  const { releaseEscrow, refundEscrow, isPending, isConfirming, isConfirmed, hash } = useEscrow();
+  const { escrowData, isRefundAvailable, timeUntilRefund, isLoading: isEscrowLoading } = useEscrowRead(parseInt(escrowId));
   
   const [escrow, setEscrow] = useState(DEMO_ESCROW_DATA);
-  const [isRefundAvailable, setIsRefundAvailable] = useState(false);
+  const [isRefundAvailableState, setIsRefundAvailableState] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const escrowId = params.id as string;
   const shareUrl = `${window.location.origin}/session/${escrowId}`;
   
   const isMaker = address?.toLowerCase() === escrow.maker.toLowerCase();
   const isTaker = address?.toLowerCase() === escrow.taker.toLowerCase();
 
-  // 期限チェック
+  // コントラクトからデータを取得
   useEffect(() => {
-    const checkRefundAvailability = () => {
-      const now = Math.floor(Date.now() / 1000);
-      setIsRefundAvailable(now >= escrow.deadline);
-    };
+    if (escrowData) {
+      setEscrow({
+        id: Number(escrowData.id),
+        maker: escrowData.maker,
+        taker: escrowData.taker,
+        asset: escrowData.asset,
+        amount: formatEther(escrowData.amount),
+        jpyAmount: Number(escrowData.jpyAmount),
+        deadline: Number(escrowData.deadline),
+        isReleased: escrowData.isReleased,
+        isRefunded: escrowData.isRefunded,
+        createdAt: Number(escrowData.createdAt),
+      });
+    }
+  }, [escrowData]);
 
-    checkRefundAvailability();
-    const interval = setInterval(checkRefundAvailability, 1000);
-    return () => clearInterval(interval);
-  }, [escrow.deadline]);
+  // Refund可能状態の更新
+  useEffect(() => {
+    if (isRefundAvailable !== undefined) {
+      setIsRefundAvailableState(isRefundAvailable);
+    }
+  }, [isRefundAvailable]);
 
   // ウォレット接続チェック
   useEffect(() => {
@@ -66,17 +83,14 @@ export default function SessionPage() {
       return;
     }
 
+    if (!otcCode) {
+      toast.error('OTCコードを入力してください');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // TODO: 実際のコントラクト呼び出しを実装
-      // const txHash = await releaseEscrowContract(escrowId, otcCode);
-      
-      // デモ用のダミー処理
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setEscrow(prev => ({ ...prev, isReleased: true }));
-      toast.success('暗号通貨が正常に送信されました！');
-      
+      await releaseEscrow(parseInt(escrowId), otcCode);
     } catch (error) {
       console.error('Release failed:', error);
       toast.error('Releaseの実行に失敗しました');
@@ -92,22 +106,14 @@ export default function SessionPage() {
       return;
     }
 
-    if (!isRefundAvailable) {
+    if (!isRefundAvailableState) {
       toast.error('期限が来るまでRefundできません');
       return;
     }
 
     setIsLoading(true);
     try {
-      // TODO: 実際のコントラクト呼び出しを実装
-      // const txHash = await refundEscrowContract(escrowId);
-      
-      // デモ用のダミー処理
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setEscrow(prev => ({ ...prev, isRefunded: true }));
-      toast.success('暗号通貨が返金されました！');
-      
+      await refundEscrow(parseInt(escrowId));
     } catch (error) {
       console.error('Refund failed:', error);
       toast.error('Refundの実行に失敗しました');
@@ -116,9 +122,18 @@ export default function SessionPage() {
     }
   };
 
+  // トランザクション完了時の処理
+  useEffect(() => {
+    if (isConfirmed && hash) {
+      toast.success('トランザクションが完了しました！');
+      // ページをリロードして最新の状態を取得
+      window.location.reload();
+    }
+  }, [isConfirmed, hash]);
+
   // 期限切れ時の処理
   const handleExpired = () => {
-    setIsRefundAvailable(true);
+    setIsRefundAvailableState(true);
     toast('期限が切れました。Refundが可能になりました。', {
       icon: 'ℹ️',
       duration: 4000,
@@ -207,15 +222,15 @@ export default function SessionPage() {
 
             {/* アクションボタン */}
             <div className="bg-white rounded-lg border p-6">
-              <ActionButtons
-                isMaker={isMaker}
-                isReleased={escrow.isReleased}
-                isRefunded={escrow.isRefunded}
-                isRefundAvailable={isRefundAvailable}
-                onRelease={() => handleRelease()}
-                onRefund={handleRefund}
-                isLoading={isLoading}
-              />
+            <ActionButtons
+              isMaker={isMaker}
+              isReleased={escrow.isReleased}
+              isRefunded={escrow.isRefunded}
+              isRefundAvailable={isRefundAvailableState}
+              onRelease={() => handleRelease()}
+              onRefund={handleRefund}
+              isLoading={isLoading || isPending || isConfirming}
+            />
             </div>
           </div>
         </div>

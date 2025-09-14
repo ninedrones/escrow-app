@@ -1,7 +1,13 @@
 const { ethers } = require("hardhat");
+require('dotenv').config({ path: '.env.local' });
 
 async function main() {
   console.log("🚀 Starting Escrow contract deployment...");
+
+  // Check if private key is available
+  if (!process.env.PRIVATE_KEY) {
+    throw new Error("PRIVATE_KEY not found in environment variables. Please check your .env.local file.");
+  }
 
   // Get the contract factory
   const signers = await ethers.getSigners();

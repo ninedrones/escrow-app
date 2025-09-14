@@ -37,7 +37,7 @@ export interface CoinMarketCapResponse {
 
 export class CoinMarketCapAPI {
   private apiKey: string;
-  private baseUrl = 'https://pro-api.coinmarketcap.com/v1';
+  private baseUrl = '/api/coinmarketcap'; // Next.js APIルート経由
 
   constructor(apiKey: string) {
     this.apiKey = apiKey;
@@ -52,24 +52,55 @@ export class CoinMarketCapAPI {
     symbols: string[],
     convert: ('USD' | 'JPY')[] = ['USD', 'JPY']
   ): Promise<CoinMarketCapResponse> {
-    const url = `${this.baseUrl}/cryptocurrency/quotes/latest`;
-    const params = new URLSearchParams({
-      symbol: symbols.join(','),
-      convert: convert.join(','),
-    });
+    // 複数の通貨を個別に取得（APIプランの制限により）
+    const results: CoinMarketCapResponse[] = [];
+    
+    for (const symbol of symbols) {
+      for (const currency of convert) {
+        const url = `${this.baseUrl}?symbol=${symbol}&convert=${currency}`;
+        
+        const response = await fetch(url, {
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
 
-    const response = await fetch(`${url}?${params}`, {
-      headers: {
-        'X-CMC_PRO_API_KEY': this.apiKey,
-        'Accept': 'application/json',
-      },
-    });
+        if (!response.ok) {
+          throw new Error(`CoinMarketCap API error: ${response.status} ${response.statusText}`);
+        }
 
-    if (!response.ok) {
-      throw new Error(`CoinMarketCap API error: ${response.status} ${response.statusText}`);
+        const data = await response.json();
+        results.push(data);
+      }
     }
 
-    return response.json();
+    // 結果をマージ
+    const mergedData: Record<string, CoinMarketCapData> = {};
+    
+    for (const result of results) {
+      for (const [key, value] of Object.entries(result.data)) {
+        if (!mergedData[key]) {
+          mergedData[key] = value;
+        } else {
+          // 既存のデータに新しい通貨の情報を追加
+          mergedData[key].quote = {
+            ...mergedData[key].quote,
+            ...value.quote,
+          };
+        }
+      }
+    }
+
+    return {
+      data: mergedData,
+      status: results[0]?.status || {
+        timestamp: new Date().toISOString(),
+        error_code: 0,
+        error_message: null,
+        elapsed: 0,
+        credit_count: 0,
+      },
+    };
   }
 
   /**
@@ -78,14 +109,26 @@ export class CoinMarketCapAPI {
    * @param convert Fiat currency to convert to (e.g., 'USD', 'JPY')
    */
   async getPrice(symbol: string, convert: 'USD' | 'JPY' = 'USD'): Promise<number> {
-    const response = await this.getLatestQuotes([symbol], [convert]);
-    const data = response.data[symbol];
+    const url = `${this.baseUrl}?symbol=${symbol}&convert=${convert}`;
     
-    if (!data || !data.quote[convert]) {
+    const response = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`CoinMarketCap API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const symbolData = data.data[symbol];
+    
+    if (!symbolData || !symbolData.quote[convert]) {
       throw new Error(`Price not found for ${symbol} in ${convert}`);
     }
 
-    return data.quote[convert].price;
+    return symbolData.quote[convert].price;
   }
 
   /**
@@ -94,13 +137,16 @@ export class CoinMarketCapAPI {
    * @param convert Fiat currency to convert to
    */
   async getPrices(symbols: string[], convert: 'USD' | 'JPY' = 'USD'): Promise<Record<string, number>> {
-    const response = await this.getLatestQuotes(symbols, [convert]);
     const prices: Record<string, number> = {};
 
+    // 各シンボルを個別に取得
     for (const symbol of symbols) {
-      const data = response.data[symbol];
-      if (data && data.quote[convert]) {
-        prices[symbol] = data.quote[convert].price;
+      try {
+        const price = await this.getPrice(symbol, convert);
+        prices[symbol] = price;
+      } catch (error) {
+        console.error(`Failed to get price for ${symbol}:`, error);
+        // エラーが発生したシンボルはスキップ
       }
     }
 

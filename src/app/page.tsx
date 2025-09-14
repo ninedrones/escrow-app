@@ -66,7 +66,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             <Link
               href="/new"
               className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow block"
@@ -93,6 +93,21 @@ export default function HomePage() {
                 参加する
               </div>
             </div>
+
+            <Link
+              href="/logs"
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow block"
+            >
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                ログを確認
+              </h3>
+              <p className="text-gray-600 mb-6">
+                すべてのEscrowイベントの履歴を表示します。
+              </p>
+              <div className="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 transition-colors text-center">
+                ログを見る
+              </div>
+            </Link>
           </div>
 
           <div className="mt-12 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">

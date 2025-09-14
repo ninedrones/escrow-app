@@ -58,7 +58,7 @@ importers:
         specifier: ^5.0.0
         version: 5.4.0
       '@playwright/test':
-        specifier: ^1.40.0
+        specifier: ^1.55.0
         version: 1.55.0
       '@testing-library/jest-dom':
         specifier: 6.8.0

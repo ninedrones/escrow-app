@@ -1,0 +1,58 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - heading "Base Escrow dApp" [level=1] [ref=e6]
+        - paragraph [ref=e7]: 安全な現金（JPY）と暗号通貨の交換プラットフォーム
+      - button "Connect Wallet" [ref=e9] [cursor=pointer]
+    - main [ref=e10]:
+      - generic [ref=e11]:
+        - heading "Escrowサービスについて" [level=2] [ref=e12]
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - heading "🛡️ 安全な取引" [level=3] [ref=e15]
+            - paragraph [ref=e16]: Baseチェーン上で動作するEscrowコントラクトにより、 現金と暗号通貨の安全な交換を実現します。
+            - list [ref=e17]:
+              - listitem [ref=e18]: • デフォルト30分のデッドライン
+              - listitem [ref=e19]: • 最大24時間の設定可能
+              - listitem [ref=e20]: • ¥1,000単位での取引
+              - listitem [ref=e21]: • $5,000 USD上限
+          - generic [ref=e22]:
+            - heading "💰 対応アセット" [level=3] [ref=e23]
+            - generic [ref=e24]:
+              - generic [ref=e25]:
+                - generic [ref=e27]: Ξ
+                - generic [ref=e28]: Ethereum (ETH)
+              - generic [ref=e29]:
+                - generic [ref=e31]: $
+                - generic [ref=e32]: USD Coin (USDC)
+              - generic [ref=e33]:
+                - generic [ref=e35]: ₮
+                - generic [ref=e36]: Tether (USDT)
+      - generic [ref=e37]:
+        - link "新しいEscrowを作成 暗号通貨を預けて、現金での受け取りを待ちます。 作成する" [ref=e38] [cursor=pointer]:
+          - /url: /new
+          - heading "新しいEscrowを作成" [level=3] [ref=e39] [cursor=pointer]
+          - paragraph [ref=e40] [cursor=pointer]: 暗号通貨を預けて、現金での受け取りを待ちます。
+          - generic [ref=e41] [cursor=pointer]: 作成する
+        - generic [ref=e42]:
+          - heading "既存のEscrowに参加" [level=3] [ref=e43]
+          - paragraph [ref=e44]: QRコードをスキャンして、既存のEscrowに参加します。
+          - generic [ref=e45]: 参加する
+        - link "ログを確認 すべてのEscrowイベントの履歴を表示します。 ログを見る" [ref=e46] [cursor=pointer]:
+          - /url: /logs
+          - heading "ログを確認" [level=3] [ref=e47] [cursor=pointer]
+          - paragraph [ref=e48] [cursor=pointer]: すべてのEscrowイベントの履歴を表示します。
+          - generic [ref=e49] [cursor=pointer]: ログを見る
+      - generic [ref=e50]:
+        - heading "⚠️ デモ目的のみ" [level=3] [ref=e51]
+        - paragraph [ref=e52]: このアプリケーションはハッカソンデモ用です。実際の金融取引には使用しないでください。
+    - contentinfo [ref=e53]:
+      - paragraph [ref=e54]: Base Escrow dApp - Demo Only
+  - button "Open Next.js Dev Tools" [ref=e60] [cursor=pointer]:
+    - img [ref=e61] [cursor=pointer]
+  - alert [ref=e65]
+```

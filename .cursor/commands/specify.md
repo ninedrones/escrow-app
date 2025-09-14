@@ -10,7 +10,7 @@ Users create escrows in multiples of ¥1,000 with a cap equivalent to $5,000 USD
 - This is designed for **hackathon demo purposes only**, not for production or real financial use.  
 
 ## Constraints
-- **Oracle-only pricing** (Chainlink ETH/USD, USDC/USD, USD/JPY).  
+- **Oracle-only pricing** (CoinMarketCap ETH/USD, USDC/USD, USD/JPY).  
 - **Multiples of ¥1,000** only.  
 - **Cap = $5,000 USD equivalent**.  
 - **Maker-only release**, refund only after deadline.  

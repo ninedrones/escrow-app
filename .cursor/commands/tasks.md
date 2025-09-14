@@ -28,7 +28,7 @@
 ### `/new`
 - [ ] Form: JPY amount (validation: multiple of 1000, ≤ $5,000 cap).
 - [ ] Asset selector (ETH, USDC, USDT).
-- [ ] Oracle integration (Chainlink feeds).
+- [ ] Oracle integration (CoinMarketCap feeds).
 - [ ] Auto-refresh prices (every 60s, on window focus).
 - [ ] Show “Updated Xs ago”.
 - [ ] Drift alert (±1%).

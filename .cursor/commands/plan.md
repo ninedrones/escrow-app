@@ -3,7 +3,7 @@
 ## Stack
 - **Smart Contracts**: Solidity 0.8.24+, OpenZeppelin (SafeERC20, Ownable, ReentrancyGuard).
 - **Frontend**: Next.js 15 + TypeScript + wagmi + viem + OnchainKit.
-- **Oracles**: Chainlink price feeds (ETH/USD, USDC/USD, USD/JPY).
+- **Oracles**: CoinMarketCap price feeds (ETH/USD, USDC/USD, USD/JPY).
 - **RPC**: Base / Base Sepolia via All That Node (fallback to Alchemy/Infura).
 - **Testing**: Hardhat or Foundry (unit tests + E2E).
 

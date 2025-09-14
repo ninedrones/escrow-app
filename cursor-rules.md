@@ -4,6 +4,8 @@
 - **Vibe Coding 前提**: AI ペアプロとして進める。逐次レビューと改善を行う。
 - **Spec-Driven Development**: `specs/specify.md`, `specs/plan.md`, `specs/tasks.md` を常に優先して参照。
 - **小さなPR単位**: 大きな変更ではなく、タスクごとに小分けで提案させる。
+- **次にやることを明確化**: `specs/specify.md`, `specs/plan.md`, `specs/tasks.md` を参照し、今どの作業をやっていて、どの作業が完了したかを明言し、次にやることを出力してください。
+
 
 ## 2. スマートコントラクト
 - **言語/環境**: Solidity 0.8.x, Hardhat。

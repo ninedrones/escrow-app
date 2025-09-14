@@ -14,6 +14,12 @@ const config = {
       viaIR: true,
     },
   },
+  paths: {
+    sources: './contracts',
+    tests: './test',
+    cache: './cache',
+    artifacts: './artifacts',
+  },
   networks: {
     hardhat: {
       chainId: 1337,
@@ -53,12 +59,6 @@ const config = {
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: 'USD',
-  },
-  paths: {
-    sources: './contracts',
-    tests: './test',
-    cache: './cache',
-    artifacts: './artifacts',
   },
 };
 

@@ -50,7 +50,7 @@ export class CoinMarketCapAPI {
    */
   async getLatestQuotes(
     symbols: string[],
-    convert: string[] = ['USD', 'JPY']
+    convert: ('USD' | 'JPY')[] = ['USD', 'JPY']
   ): Promise<CoinMarketCapResponse> {
     const url = `${this.baseUrl}/cryptocurrency/quotes/latest`;
     const params = new URLSearchParams({
@@ -77,7 +77,7 @@ export class CoinMarketCapAPI {
    * @param symbol Cryptocurrency symbol (e.g., 'BTC', 'ETH')
    * @param convert Fiat currency to convert to (e.g., 'USD', 'JPY')
    */
-  async getPrice(symbol: string, convert: string = 'USD'): Promise<number> {
+  async getPrice(symbol: string, convert: 'USD' | 'JPY' = 'USD'): Promise<number> {
     const response = await this.getLatestQuotes([symbol], [convert]);
     const data = response.data[symbol];
     
@@ -93,7 +93,7 @@ export class CoinMarketCapAPI {
    * @param symbols Array of cryptocurrency symbols
    * @param convert Fiat currency to convert to
    */
-  async getPrices(symbols: string[], convert: string = 'USD'): Promise<Record<string, number>> {
+  async getPrices(symbols: string[], convert: 'USD' | 'JPY' = 'USD'): Promise<Record<string, number>> {
     const response = await this.getLatestQuotes(symbols, [convert]);
     const prices: Record<string, number> = {};
 

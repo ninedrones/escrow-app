@@ -25,7 +25,26 @@ export function usePriceCalculation() {
     lastUpdated: null,
   });
 
-  const fetchPrices = useCallback(async () => {
+  // レート制限のための状態
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [isRateLimited, setIsRateLimited] = useState<boolean>(false);
+
+  const fetchPrices = useCallback(async (force: boolean = false) => {
+    const now = Date.now();
+    const timeSinceLastFetch = now - lastFetchTime;
+    
+    // レート制限: 最低10秒間隔（1分間に6回以下）
+    if (!force && timeSinceLastFetch < 10000) {
+      console.log('Rate limited: Too soon to fetch prices');
+      return;
+    }
+
+    // レート制限中の場合、強制でない限りスキップ
+    if (isRateLimited && !force) {
+      console.log('Rate limited: API limit reached');
+      return;
+    }
+
     try {
       setPriceData(prev => ({ ...prev, loading: true, error: null }));
       
@@ -40,32 +59,58 @@ export function usePriceCalculation() {
         error: null,
         lastUpdated: new Date(),
       });
+      
+      setLastFetchTime(now);
+      setIsRateLimited(false);
     } catch (error) {
       console.error('Failed to fetch prices:', error);
-      setPriceData(prev => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch prices',
-      }));
+      
+      // 429エラーの場合はレート制限を有効にする
+      if (error instanceof Error && error.message.includes('429')) {
+        setIsRateLimited(true);
+        setPriceData(prev => ({
+          ...prev,
+          loading: false,
+          error: 'API rate limit reached. Please wait before retrying.',
+        }));
+        
+        // 5分後にレート制限を解除
+        setTimeout(() => {
+          setIsRateLimited(false);
+        }, 300000);
+      } else {
+        setPriceData(prev => ({
+          ...prev,
+          loading: false,
+          error: error instanceof Error ? error.message : 'Failed to fetch prices',
+        }));
+      }
     }
+  }, [lastFetchTime, isRateLimited]);
+
+  // 初回読み込み時のみ実行
+  useEffect(() => {
+    fetchPrices(true);
   }, []);
 
-  // Fetch prices on mount and every 60 seconds
+  // 2分ごとに価格を更新（レート制限を考慮）
   useEffect(() => {
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 60000); // 60 seconds
+    const interval = setInterval(() => {
+      fetchPrices(false);
+    }, 120000); // 2分間隔に変更
+    
     return () => clearInterval(interval);
   }, [fetchPrices]);
 
-  // Fetch prices when window regains focus
-  useEffect(() => {
-    const handleFocus = () => {
-      fetchPrices();
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [fetchPrices]);
+  // ウィンドウフォーカス時の更新を無効化（レート制限のため）
+  // useEffect(() => {
+  //   const handleFocus = () => {
+  //     fetchPrices(false);
+  //   };
+  //   
+  //   window.addEventListener('focus', handleFocus);
+  //   return () => window.removeEventListener('focus', handleFocus);
+  // }, [fetchPrices]);
 
   const calculateAssetAmount = useCallback((
     jpyAmount: number,

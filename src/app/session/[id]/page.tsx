@@ -119,7 +119,10 @@ export default function SessionPage() {
   // 期限切れ時の処理
   const handleExpired = () => {
     setIsRefundAvailable(true);
-    toast.info('期限が切れました。Refundが可能になりました。');
+    toast('期限が切れました。Refundが可能になりました。', {
+      icon: 'ℹ️',
+      duration: 4000,
+    });
   };
 
   if (!isConnected) {

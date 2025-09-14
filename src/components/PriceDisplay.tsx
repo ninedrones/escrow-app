@@ -16,7 +16,7 @@ export function PriceDisplay({ jpyAmount, assetSymbol, onPriceDrift }: PriceDisp
   const hasPriceDrift = priceData.lastUpdated && 
     Date.now() - priceData.lastUpdated.getTime() > 60000; // 60秒以上経過
 
-  if (onPriceDrift) {
+  if (onPriceDrift && hasPriceDrift !== null) {
     onPriceDrift(hasPriceDrift);
   }
 
@@ -42,18 +42,26 @@ export function PriceDisplay({ jpyAmount, assetSymbol, onPriceDrift }: PriceDisp
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-medium text-gray-700">現在の価格</h3>
           <button
-            onClick={refetchPrices}
-            disabled={priceData.loading}
+            onClick={() => refetchPrices(true)}
+            disabled={priceData.loading || priceData.error?.includes('rate limit')}
             className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50"
           >
-            {priceData.loading ? '更新中...' : '更新'}
+            {priceData.loading ? '更新中...' : 
+             priceData.error?.includes('rate limit') ? '制限中' : '更新'}
           </button>
         </div>
         
         {priceData.loading ? (
           <div className="text-sm text-gray-500">価格を取得中...</div>
         ) : priceData.error ? (
-          <div className="text-sm text-red-600">エラー: {priceData.error}</div>
+          <div className="text-sm text-red-600">
+            エラー: {priceData.error}
+            {priceData.error.includes('rate limit') && (
+              <div className="text-xs text-yellow-600 mt-1">
+                ⏳ API制限中 - 5分後に自動再試行
+              </div>
+            )}
+          </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>

@@ -7,21 +7,21 @@
 - [ ] Add Spec Kit (`specs/`), docs/ folder, lint/format config.
 
 ## Smart Contract (Escrow.sol)
-- [ ] Implement skeleton: `createEscrow`, `release`, `refund`.
-- [ ] Restrict to allowed tokens (ETH, USDC, USDT).
-- [ ] Enforce multiples of ¥1,000 and cap = $5,000 USD.
-- [ ] Store OTC hash, never store plaintext.
-- [ ] Add events (indexed: id, maker, taker, asset, jpyAmount, priceRefTag).
-- [ ] Add deadline logic: default 30 minutes, max up to 24h.
-- [ ] Write unit tests:
-  - [ ] Normal flow: create → release.
-  - [ ] Refund flow: create → wait deadline → refund.
-  - [ ] Validation: reject non-¥1,000 multiples.
-  - [ ] Validation: reject cap > $5,000 USD.
-  - [ ] Validation: double release/refund prohibited.
-  - [ ] Deadline boundary test: refund not possible before expiry.
-  - [ ] OTC hash verification test.
-  - [ ] Oracle failure test: revert on stale/invalid feed.
+- [x] Implement skeleton: `createEscrow`, `release`, `refund`.
+- [x] Restrict to allowed tokens (ETH, USDC, USDT).
+- [x] Enforce multiples of ¥1,000 and cap = $5,000 USD.
+- [x] Store OTC hash, never store plaintext.
+- [x] Add events (indexed: id, maker, taker, asset, jpyAmount, priceRefTag).
+- [x] Add deadline logic: default 30 minutes, max up to 24h.
+- [x] Write unit tests:
+  - [x] Normal flow: create → release.
+  - [x] Refund flow: create → wait deadline → refund.
+  - [x] Validation: reject non-¥1,000 multiples.
+  - [x] Validation: reject cap > $5,000 USD.
+  - [x] Validation: double release/refund prohibited.
+  - [x] Deadline boundary test: refund not possible before expiry.
+  - [x] OTC hash verification test.
+  - [x] Oracle failure test: revert on stale/invalid feed.
 - [ ] Deploy to Base Sepolia.
 
 ## Frontend

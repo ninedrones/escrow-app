@@ -1,9 +1,9 @@
-import { HardhatUserConfig } from 'hardhat/config';
-import '@nomicfoundation/hardhat-toolbox';
-import 'solidity-coverage';
-import 'dotenv/config';
+const { HardhatUserConfig } = require('hardhat/config');
+require('@nomicfoundation/hardhat-toolbox');
+require('solidity-coverage');
+require('dotenv/config');
 
-const config: HardhatUserConfig = {
+const config = {
   solidity: {
     version: '0.8.24',
     settings: {
@@ -30,10 +30,7 @@ const config: HardhatUserConfig = {
     },
   },
   etherscan: {
-    apiKey: {
-      baseSepolia: process.env.ETHERSCAN_API_KEY || '',
-      base: process.env.ETHERSCAN_API_KEY || '',
-    },
+    apiKey: process.env.ETHERSCAN_API_KEY || '',
     customChains: [
       {
         network: 'baseSepolia',
@@ -65,4 +62,4 @@ const config: HardhatUserConfig = {
   },
 };
 
-export default config;
+module.exports = config;

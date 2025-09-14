@@ -4,6 +4,15 @@ async function main() {
   console.log("🚀 Starting Escrow contract deployment...");
 
   // Get the contract factory
+  const signers = await ethers.getSigners();
+  if (signers.length === 0) {
+    throw new Error("No signers available. Please check your private key configuration.");
+  }
+  
+  const deployer = signers[0];
+  console.log("Deploying contracts with the account:", deployer.address);
+  console.log("Account balance:", (await deployer.provider.getBalance(deployer.address)).toString());
+
   const Escrow = await ethers.getContractFactory("Escrow");
 
   // Base Sepolia addresses

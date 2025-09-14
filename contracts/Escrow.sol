@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+// Price calculation moved to frontend using CoinMarketCap API
 
 /**
  * @title Escrow
@@ -36,10 +36,7 @@ contract Escrow is ReentrancyGuard, Ownable {
     
     // ============ State Variables ============
     
-    /// @notice Chainlink price feeds
-    AggregatorV3Interface public immutable ethUsdFeed;
-    AggregatorV3Interface public immutable usdcUsdFeed;
-    AggregatorV3Interface public immutable usdJpyFeed;
+    // Price feeds removed - using CoinMarketCap API in frontend
     
     /// @notice Escrow counter for unique IDs
     uint256 public escrowCounter;
@@ -97,6 +94,7 @@ contract Escrow is ReentrancyGuard, Ownable {
     error InvalidJPYAmount();
     error InvalidDeadline();
     error InvalidAsset();
+    error InvalidAmount();
     error EscrowNotFound();
     error EscrowAlreadyReleased();
     error EscrowAlreadyRefunded();
@@ -110,16 +108,10 @@ contract Escrow is ReentrancyGuard, Ownable {
     
     constructor(
         address _usdcAddress,
-        address _usdtAddress,
-        address _ethUsdFeed,
-        address _usdcUsdFeed,
-        address _usdJpyFeed
-    ) {
+        address _usdtAddress
+    ) Ownable(msg.sender) {
         USDC_ADDRESS = _usdcAddress;
         USDT_ADDRESS = _usdtAddress;
-        ethUsdFeed = AggregatorV3Interface(_ethUsdFeed);
-        usdcUsdFeed = AggregatorV3Interface(_usdcUsdFeed);
-        usdJpyFeed = AggregatorV3Interface(_usdJpyFeed);
     }
     
     // ============ External Functions ============
@@ -129,6 +121,7 @@ contract Escrow is ReentrancyGuard, Ownable {
      * @param _taker The address of the taker
      * @param _asset The asset address (ETH = address(0), USDC, USDT)
      * @param _jpyAmount The JPY amount (must be multiple of ¥1,000)
+     * @param _assetAmount The required asset amount (calculated by frontend)
      * @param _deadlineDuration The deadline duration in seconds (max 24h)
      * @param _otcCode The one-time code for verification
      * @return escrowId The created escrow ID
@@ -137,6 +130,7 @@ contract Escrow is ReentrancyGuard, Ownable {
         address _taker,
         address _asset,
         uint256 _jpyAmount,
+        uint256 _assetAmount,
         uint256 _deadlineDuration,
         string memory _otcCode
     ) external payable nonReentrant returns (uint256 escrowId) {
@@ -158,36 +152,21 @@ contract Escrow is ReentrancyGuard, Ownable {
             revert InvalidAsset();
         }
         
-        // Get current prices from Chainlink
-        (uint256 ethUsdPrice, uint256 usdcUsdPrice, uint256 usdJpyPrice) = _getCurrentPrices();
-        
-        // Calculate required asset amount
-        uint256 requiredAmount = _calculateAssetAmount(
-            _asset,
-            _jpyAmount,
-            ethUsdPrice,
-            usdcUsdPrice,
-            usdJpyPrice
-        );
-        
-        // Check USD cap
-        uint256 usdEquivalent = _calculateUSDEquivalent(
-            _asset,
-            requiredAmount,
-            ethUsdPrice,
-            usdcUsdPrice
-        );
-        if (usdEquivalent > MAX_USD_CAP) {
-            revert ExceedsUSDCap();
+        // Validate asset amount
+        if (_assetAmount == 0) {
+            revert InvalidAmount();
         }
         
         // Handle asset transfer
         if (_asset == ETH_ADDRESS) {
-            if (msg.value != requiredAmount) {
-                revert InvalidAsset();
+            if (msg.value != _assetAmount) {
+                revert InvalidAmount();
             }
         } else {
-            IERC20(_asset).safeTransferFrom(msg.sender, address(this), requiredAmount);
+            if (msg.value != 0) {
+                revert InvalidAmount();
+            }
+            IERC20(_asset).safeTransferFrom(msg.sender, address(this), _assetAmount);
         }
         
         // Generate escrow ID
@@ -199,7 +178,7 @@ contract Escrow is ReentrancyGuard, Ownable {
             maker: msg.sender,
             taker: _taker,
             asset: _asset,
-            amount: requiredAmount,
+            amount: _assetAmount,
             jpyAmount: _jpyAmount,
             deadline: block.timestamp + _deadlineDuration,
             hashOTC: keccak256(abi.encodePacked(_otcCode, block.timestamp, escrowId)),
@@ -217,7 +196,7 @@ contract Escrow is ReentrancyGuard, Ownable {
             msg.sender,
             _taker,
             _asset,
-            requiredAmount,
+            _assetAmount,
             _jpyAmount,
             block.timestamp + _deadlineDuration,
             keccak256(abi.encodePacked(_otcCode, block.timestamp, escrowId)),
@@ -366,107 +345,7 @@ contract Escrow is ReentrancyGuard, Ownable {
     
     // ============ Internal Functions ============
     
-    /**
-     * @notice Get current prices from Chainlink feeds
-     * @return ethUsdPrice ETH/USD price in 8 decimals
-     * @return usdcUsdPrice USDC/USD price in 8 decimals
-     * @return usdJpyPrice USD/JPY price in 8 decimals
-     */
-    function _getCurrentPrices() internal view returns (uint256, uint256, uint256) {
-        try ethUsdFeed.latestRoundData() returns (
-            uint80,
-            int256 ethUsdPrice,
-            uint256,
-            uint256,
-            uint80
-        ) {
-            if (ethUsdPrice <= 0) revert OracleError();
-            
-            try usdcUsdFeed.latestRoundData() returns (
-                uint80,
-                int256 usdcUsdPrice,
-                uint256,
-                uint256,
-                uint80
-            ) {
-                if (usdcUsdPrice <= 0) revert OracleError();
-                
-                try usdJpyFeed.latestRoundData() returns (
-                    uint80,
-                    int256 usdJpyPrice,
-                    uint256,
-                    uint256,
-                    uint80
-                ) {
-                    if (usdJpyPrice <= 0) revert OracleError();
-                    
-                    return (uint256(ethUsdPrice), uint256(usdcUsdPrice), uint256(usdJpyPrice));
-                } catch {
-                    revert OracleError();
-                }
-            } catch {
-                revert OracleError();
-            }
-        } catch {
-            revert OracleError();
-        }
-    }
-    
-    /**
-     * @notice Calculate required asset amount based on JPY amount
-     * @param _asset The asset address
-     * @param _jpyAmount The JPY amount
-     * @param _ethUsdPrice ETH/USD price
-     * @param _usdcUsdPrice USDC/USD price
-     * @param _usdJpyPrice USD/JPY price
-     * @return The required asset amount
-     */
-    function _calculateAssetAmount(
-        address _asset,
-        uint256 _jpyAmount,
-        uint256 _ethUsdPrice,
-        uint256 _usdcUsdPrice,
-        uint256 _usdJpyPrice
-    ) internal pure returns (uint256) {
-        // Convert JPY to USD
-        uint256 usdAmount = (_jpyAmount * 1e8) / _usdJpyPrice;
-        
-        if (_asset == ETH_ADDRESS) {
-            // Calculate ETH amount (18 decimals)
-            return (usdAmount * 1e18) / _ethUsdPrice;
-        } else if (_asset == USDC_ADDRESS) {
-            // Calculate USDC amount (6 decimals)
-            return (usdAmount * 1e6) / _usdcUsdPrice;
-        } else if (_asset == USDT_ADDRESS) {
-            // Calculate USDT amount (6 decimals)
-            return (usdAmount * 1e6) / _usdcUsdPrice;
-        }
-        
-        revert InvalidAsset();
-    }
-    
-    /**
-     * @notice Calculate USD equivalent of asset amount
-     * @param _asset The asset address
-     * @param _amount The asset amount
-     * @param _ethUsdPrice ETH/USD price
-     * @param _usdcUsdPrice USDC/USD price
-     * @return The USD equivalent in 8 decimals
-     */
-    function _calculateUSDEquivalent(
-        address _asset,
-        uint256 _amount,
-        uint256 _ethUsdPrice,
-        uint256 _usdcUsdPrice
-    ) internal pure returns (uint256) {
-        if (_asset == ETH_ADDRESS) {
-            return (_amount * _ethUsdPrice) / 1e18;
-        } else if (_asset == USDC_ADDRESS || _asset == USDT_ADDRESS) {
-            return (_amount * _usdcUsdPrice) / 1e6;
-        }
-        
-        revert InvalidAsset();
-    }
+    // Price calculation functions removed - now handled by frontend using CoinMarketCap API
     
     // ============ Receive Function ============
     

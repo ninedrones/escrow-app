@@ -1,108 +1,168 @@
 # Base Escrow dApp
 
-A demo-only **Escrow dApp** on **Base chain**, enabling safe in-person swaps between cash (JPY) and crypto (ETH, USDC, USDT).
+A secure, decentralized escrow application for safe in-person swaps between Japanese Yen (JPY) and cryptocurrency on Base blockchain.
 
-## 🚀 Features
+## Project Description
 
-- **Safe P2P Swaps**: Create escrows for in-person crypto-to-cash exchanges
-- **Oracle-Powered Pricing**: Real-time Chainlink price feeds for accurate conversions
-- **Mobile-First Design**: Optimized for mobile vertical layout
-- **No Backend Required**: Fully on-chain with frontend-only architecture
-- **Security First**: Maker-only release, deadline-based refunds, OTC verification
+Base Escrow dApp is a demo-only application designed for hackathon purposes that enables secure peer-to-peer transactions between cash (JPY) and cryptocurrency. The platform provides a trustless escrow service where users can safely exchange physical cash for digital assets without the need for a trusted third party.
 
-## 📋 Requirements
+### Key Features
 
-- **JPY Amount**: Must be multiples of ¥1,000
-- **Cap**: Maximum $5,000 USD equivalent
-- **Supported Assets**: ETH, USDC, USDT on Base
-- **Deadline**: Default 30 minutes (configurable up to 24h)
+- **Secure Escrow System**: Smart contract-based escrow with automatic refund capabilities
+- **Multi-Asset Support**: ETH, USDC, and USDT support
+- **Real-time Price Feeds**: CoinMarketCap API integration for accurate JPY-to-crypto conversions
+- **One-Time Code (OTC) System**: Secure verification mechanism for in-person transactions
+- **Mobile-First Design**: Optimized for mobile devices with intuitive UX
+- **Farcaster Integration**: Mini App support for seamless social interactions
 
-## 🛠️ Tech Stack
+### How It Works
 
-- **Frontend**: Next.js 15 + TypeScript + Tailwind CSS
-- **Web3**: wagmi + viem + OnchainKit
-- **Smart Contracts**: Solidity 0.8.24+ + OpenZeppelin
-- **Oracles**: Chainlink price feeds
-- **Testing**: Hardhat + Playwright
+1. **Maker** creates an escrow by depositing cryptocurrency and specifying JPY amount
+2. **Taker** receives a QR code with OTC for the transaction
+3. **In-person exchange**: Physical cash is exchanged for the OTC code
+4. **Release**: Maker releases funds using the OTC code
+5. **Automatic Refund**: If not released within deadline, funds are automatically returned
 
-## 🚀 Quick Start
+## Technologies Used
 
-### Prerequisites
+### Smart Contracts
+- **Solidity 0.8.24**: Smart contract development
+- **Hardhat**: Development environment and testing framework
+- **OpenZeppelin**: Security-focused smart contract libraries
+  - ReentrancyGuard for protection against reentrancy attacks
+  - Ownable for access control
+  - SafeERC20 for secure token operations
 
-- Node.js 18+ 
-- pnpm 8+
-- Git
+### Frontend
+- **Next.js 15.5.3**: React framework with App Router
+- **TypeScript**: Type-safe development
+- **Tailwind CSS**: Utility-first CSS framework
+- **Wagmi + Viem**: Ethereum wallet integration
+- **OnchainKit**: Coinbase wallet integration
+- **React Hot Toast**: User notifications
 
-### Installation
+### Blockchain & APIs
+- **Base Sepolia**: Test network for development
+- **CoinMarketCap API**: Real-time cryptocurrency price data
+- **ERC-20 Tokens**: USDC and USDT support
+
+### Development Tools
+- **Playwright**: End-to-end testing
+- **ESLint**: Code linting
+- **Vercel**: Deployment platform
+
+## Basic Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Smart         │    │   External      │
+│   (Next.js)     │    │   Contract      │    │   Services      │
+│                 │    │   (Escrow.sol)  │    │                 │
+├─────────────────┤    ├─────────────────┤    ├─────────────────┤
+│ • Wallet Connect│◄──►│ • Escrow Logic  │    │ • CoinMarketCap │
+│ • Price Display │    │ • OTC System    │    │   API           │
+│ • QR Code Gen   │    │ • Auto Refund   │    │ • Base Network  │
+│ • Mobile UI     │    │ • Multi-token   │    │ • Farcaster     │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Smart Contract Architecture
+
+The `Escrow.sol` contract implements:
+
+- **Escrow Management**: Create, release, and refund operations
+- **Security Features**: Reentrancy protection, access controls
+- **Multi-Token Support**: ETH, USDC, USDT with proper ERC-20 handling
+- **OTC Verification**: Cryptographic verification of one-time codes
+- **Deadline Management**: Automatic refund after expiration
+
+### Frontend Architecture
+
+- **Pages**: Home, New Escrow, Session Management, Logs
+- **Components**: Modular UI components for reusability
+- **Hooks**: Custom React hooks for blockchain interactions
+- **API Routes**: CoinMarketCap proxy for CORS handling
+
+## Source Code
+
+- **Repository**: [GitHub Repository](https://github.com/your-username/base-escrow-dapp)
+- **License**: MIT License (Open Source)
+- **Smart Contract**: `contracts/Escrow.sol`
+- **Frontend**: `src/` directory with Next.js structure
+
+## Deployment
+
+### Demo Deployment
+- **Live Demo**: [https://escrow-app-seven.vercel.app](https://escrow-app-seven.vercel.app)
+- **Farcaster Mini App**: Available on Farcaster platform
+- **Network**: Base Sepolia Testnet
+
+### Contract Addresses
+- **Escrow Contract**: `0xA755f4c3e56c5ea2815c0013843fe9cf6d1762D4`
+- **USDC**: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
+- **USDT**: `0x50c5725949A6F0c72E6C4a641F24049A917DB0Cb`
+
+### Local Development
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd escrow-app
+   git clone https://github.com/your-username/base-escrow-dapp.git
+   cd base-escrow-dapp
    ```
 
 2. **Install dependencies**
    ```bash
+   npm install
+   # or
    pnpm install
    ```
 
 3. **Set up environment variables**
    ```bash
-   cp env.example .env.local
-   # Edit .env.local with your configuration
+   cp .env.example .env.local
+   # Edit .env.local with your API keys and contract addresses
    ```
 
-4. **Start development server**
+4. **Compile smart contracts**
    ```bash
-   pnpm dev
+   npx hardhat compile
    ```
 
-5. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-### Smart Contract Development
-
-1. **Compile contracts**
+5. **Deploy contracts**
    ```bash
-   pnpm compile
+   npx hardhat run scripts/deploy.cjs --network baseSepolia
    ```
 
-2. **Run tests**
+6. **Start development server**
    ```bash
-   pnpm test
+   npm run dev
    ```
 
-3. **Deploy to Base Sepolia**
-   ```bash
-   pnpm deploy:sepolia
-   ```
+### Testing
 
-## 📱 Usage Flow
+- **Smart Contract Tests**: `npx hardhat test`
+- **E2E Tests**: `npx playwright test`
+- **Coverage**: `npx hardhat coverage`
 
-1. **Create Escrow**: Maker inputs JPY amount and selects crypto asset
-2. **Generate OTC Code**: System creates one-time code for verification
-3. **In-Person Meeting**: Maker and Taker exchange cash and OTC code
-4. **Release Funds**: Maker inputs OTC code to release crypto to Taker
-5. **Refund Option**: If deadline passes, Maker can refund their crypto
+## Security Considerations
 
-## 🔒 Security Features
+- **Demo Only**: This application is designed for hackathon demonstration purposes
+- **Testnet Only**: Currently deployed on Base Sepolia testnet
+- **Price Oracle**: Uses CoinMarketCap API (not decentralized)
+- **OTC System**: One-time codes provide basic security for in-person transactions
 
-- **Maker-Only Control**: Only escrow creator can release or refund
-- **Deadline Protection**: Refunds only available after deadline
-- **OTC Verification**: One-time codes prevent replay attacks
-- **Oracle Validation**: Real-time price verification prevents manipulation
-- **No Plaintext Storage**: OTC codes are hashed on-chain
+## Future Enhancements
 
-## 🧪 Testing
+- **Chainlink Integration**: Decentralized price feeds
+- **Multi-chain Support**: Expand to other EVM-compatible chains
+- **Advanced Security**: Multi-signature requirements
+- **Mobile App**: Native mobile application
+- **Analytics**: Transaction analytics and reporting
 
-- **Unit Tests**: `pnpm test`
-- **E2E Tests**: `pnpm e2e`
-- **Coverage**: `pnpm test:coverage`
+## Contributing
 
-## 📄 License
+This is a hackathon project. For production use, additional security audits and testing would be required.
 
-MIT License - See [LICENSE](LICENSE) file for details.
+## License
 
-## ⚠️ Disclaimer
-
-This application is for **demo purposes only**. Do not use for actual financial transactions. This is a hackathon project and should not be considered production-ready.
+MIT License - see LICENSE file for details.
